@@ -16,22 +16,21 @@ The project involves setting up a Kubernetes cluster using Kubeadm on AWS EC2 in
 ### 1. Infrastructure Provisioning with Terraform
 - Automate the setup of AWS EC2 instances and other necessary infrastructure components using Terraform scripts.
 
-This section outlines the Terraform scripts used to automate the setup of AWS EC2 instances and other necessary infrastructure components for the Kubernetes cluster.
+Provided is the Terraform scripts used to automate the setup of 3 AWS EC2 instances and other necessary infrastructure components for the Kubernetes cluster.
 
 Terraform Files Description
-ec2_instances.tf: Configures the EC2 instances, specifying instance type, AMI, and quantity, essential for the Kubernetes nodes.
+**ec2_instances.tf**
 
-gateway.tf: Defines the Internet Gateway for the AWS VPC, enabling internet access to the EC2 instances.
+**gateway.tf**
 
-output.tf: Manages output configurations, displaying critical infrastructure information post Terraform execution.
+**output.tf**
 
-provider.tf: Sets the AWS provider details, including region and other necessary settings for Terraform-AWS interaction.
+**provider.tf** 
 
-security_group.tf: Establishes security groups with rules for inbound and outbound traffic to safeguard the EC2 instances.
+**security_group.tf**
 
-vpc.tf: Sets up the Virtual Private Cloud (VPC) with subnets, route tables, and other network configurations.
+**vpc.tf**
 
-Usage Instructions
 Initialize Terraform
 
 Open your terminal.
