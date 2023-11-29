@@ -64,7 +64,103 @@ To remove the infrastructure and avoid unnecessary AWS charges, run terraform de
 Confirm the action when prompted, and Terraform will delete the resources it created.
 
 ### 2. Kubernetes Cluster Setup using Kubeadm
-- Deploy and configure a Kubernetes cluster on the provisioned AWS EC2 instances using Kubeadm.
+- Deploy and configure a Kubernetes cluster on the provisioned AWS EC2 instances using Kubeadm for cluster creation, Containerd as container runtime and weave for Weave Net for Network Policy.
+
+**Preparation of EC2 Instances**
+
+    Ensure all EC2 instances are up and running as per the Terraform deployment.
+    SSH into each EC2 instance.
+    Update the package lists and install any pending updates.
+
+Run the following script on all nodes
+```bash
+#!/bin/bash
+
+# Stop the script if any command fails
+set -e
+
+# Disable swap
+swapoff -a
+sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+# Load the overlay and br_netfilter modules
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# Set sysctl params, these will persist across reboots
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Apply sysctl params without reboot
+sudo sysctl --system
+
+# Install prerequisites
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+
+# Add Docker’s official GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add Docker’s repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install containerd
+sudo apt-get update
+sudo apt-get install -y containerd.io
+
+# Start and enable containerd service
+sudo systemctl start containerd
+sudo systemctl enable containerd
+
+# Configure containerd to use systemd as the cgroup driver
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+
+# Modify the configuration file to set the systemd cgroup
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+# Restart containerd to apply the changes
+sudo systemctl restart containerd
+
+# Update the apt package index and install packages needed to use the Kubernetes apt repository
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+# Download the public signing key for the Kubernetes package repositories
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# Add the Kubernetes repository
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# Update apt package index, install kubelet, kubeadm, and kubectl, and pin their version
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+```
+Copy the above script into a new file, e.g., setup-kubernetes.sh.
+
+Run ```bash chmod +x setup-kubernetes.sh ``` to make the script executable.
+
+Execute the script with 
+```bash
+sudo ./setup-kubernetes.sh
+```
+
+This script automates the setup process for a Kubernetes node. It starts by disabling swap and setting up necessary kernel modules like 'overlay' and 'br_netfilter'. Then, it adjusts sysctl parameters to ensure proper network forwarding and bridge filtering. The script proceeds to install containerd, a container runtime, and configures it to use systemd as the cgroup driver. It also handles the addition of Docker's and Kubernetes' official repositories and GPG keys to the system's package manager. Finally, the script installs Kubernetes components including kubelet, kubeadm, and kubectl, and ensures their versions are held to prevent unintended upgrades.
+
 
 ### 3. Traffic Distribution via AWS Network Load Balancer
 - Implement an AWS Network Load Balancer to distribute incoming traffic efficiently across the Kubernetes nodes.
