@@ -18,18 +18,17 @@ The project involves setting up a Kubernetes cluster using Kubeadm on AWS EC2 in
 
 Provided is the Terraform scripts used to automate the setup of 3 AWS EC2 instances and other necessary infrastructure components for the Kubernetes cluster.
 
-Terraform Files Description
-**ec2_instances.tf**
+- **ec2_instances.tf**
 
-**gateway.tf**
+- **gateway.tf**
 
-**output.tf**
+- **output.tf**
 
-**provider.tf** 
+- **provider.tf** 
 
-**security_group.tf**
+- **security_group.tf**
 
-**vpc.tf**
+- **vpc.tf**
 
 Initialize Terraform
 
