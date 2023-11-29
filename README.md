@@ -34,6 +34,7 @@ Initialize Terraform
 
 Open your terminal.
 Navigate to the directory containing the Terraform files.
+
 Run
 ```bash
 terraform init
@@ -41,11 +42,13 @@ terraform init
 This command initializes Terraform, installs the AWS provider, and prepares the environment for deployment.
 Plan Infrastructure Deployment
 
+
 ```bash
 terraform plan
 ```
-This step allows you to review the actions Terraform will perform before actually making changes to your AWS infrastructure.
+Review the actions Terraform will perform before actually making changes to your AWS infrastructure.
 Apply Configuration
+
 
 ```bash
 terraform apply
